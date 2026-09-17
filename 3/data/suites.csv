@@ -1,0 +1,4 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"Verify that a product added from its details page is listed in the cart.","3313","user can add a product to the cart","e2e","2026-09-17","passed","2026-09-17","Cart","tests/e2e/cart.spec.ts","",""
+"Verify that selecting the Laptops category shows only laptop products.","2133","user can filter products by the Laptops category","e2e","2026-09-17","passed","2026-09-17","Catalog","tests/e2e/catalog.spec.ts","",""
+"Verify that a registered user can log in and is greeted by name.","2588","user can log in with valid credentials","e2e","2026-09-17","passed","2026-09-17","Login","tests/e2e/login.spec.ts","",""
