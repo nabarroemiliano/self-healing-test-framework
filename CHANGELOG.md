@@ -43,6 +43,14 @@ Python reference project `../ai-playwright-framework`.
   test heals the selector at runtime, passes, and restores the literal in the file.
 - The same broken selector with `SELF_HEALING=false` fails with the original Playwright error.
 
+### Fixed
+
+- CI `npm ci` failed with `ETIMEDOUT` because `package-lock.json` was generated against Miro's
+  internal Artifactory registry, which GitHub runners cannot reach. Added `.npmrc` pinning
+  `registry.npmjs.org` so the corporate global `~/.npmrc` no longer leaks into this repo, and
+  regenerated the lockfile. All 33 `resolved` URLs now point at public npm; every `integrity` hash
+  is unchanged, confirming identical tarballs.
+
 ### Known limitations
 
 - String fuzzy matching cannot heal an element whose identifying attribute was removed entirely;
