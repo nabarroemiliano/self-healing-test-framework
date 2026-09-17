@@ -7,3 +7,5 @@ playwright-report/
 .idea/
 .vscode/
 .DS_Store
+allure-history/
+gh-pages/

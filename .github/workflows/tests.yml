@@ -4,6 +4,16 @@ on:
   push:
   pull_request:
 
+# actions-gh-pages pushes the report to the gh-pages branch; the repository default
+# for GITHUB_TOKEN is read-only.
+permissions:
+  contents: write
+
+# Serialise runs so two jobs never push to gh-pages at the same time.
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -31,9 +41,64 @@ jobs:
       - name: Run tests
         run: npx playwright test --project e2e
 
+      - name: Check out published report branch
+        if: always()
+        # gh-pages does not exist until the first publish.
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Seed Allure history from previous run
+        if: always()
+        run: |
+          if [ -d gh-pages/last-history ]; then
+            mkdir -p allure-results/history
+            cp -r gh-pages/last-history/. allure-results/history/
+          fi
+
       - name: Generate Allure report
         if: always()
         run: npx allure generate allure-results -o allure-report --clean
+
+      - name: Assemble report tree for publishing
+        if: always()
+        env:
+          IS_DEFAULT_BRANCH: ${{ github.ref_name == github.event.repository.default_branch }}
+        run: |
+          mkdir -p allure-history
+          cp -r allure-report "allure-history/${GITHUB_RUN_NUMBER}"
+          # Only the default branch owns the root "latest" report and the trend carry-over,
+          # so a feature-branch run cannot clobber either.
+          if [ "$IS_DEFAULT_BRANCH" = "true" ]; then
+            cp -r allure-report/. allure-history/
+            if [ -d allure-report/history ]; then
+              rm -rf allure-history/last-history
+              cp -r allure-report/history allure-history/last-history
+            fi
+          fi
+
+      - name: Publish report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
+          keep_files: true
+
+      - name: Add report link to summary
+        if: always()
+        run: |
+          OWNER=$(echo "${GITHUB_REPOSITORY%%/*}" | tr '[:upper:]' '[:lower:]')
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          {
+            echo "## Allure report"
+            echo ""
+            echo "- This run: https://${OWNER}.github.io/${REPO_NAME}/${GITHUB_RUN_NUMBER}/"
+            echo "- Latest: https://${OWNER}.github.io/${REPO_NAME}/"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Allure report
         if: always()

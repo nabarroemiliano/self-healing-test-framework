@@ -29,7 +29,13 @@ Python reference project `../ai-playwright-framework`.
 - **Tests**
   - e2e: login with valid credentials, add product to cart, filter by Laptops (3 tests)
 - **CI** (`.github/workflows/tests.yml`): type check + e2e with `SELF_HEALING=false`,
-  Allure report uploaded as artifact.
+  Allure report uploaded as artifact and published to GitHub Pages with the URL printed in the
+  Actions run summary. Every run keeps its own `/<run_number>/` directory; only default-branch runs
+  overwrite the root "latest" report. Trend and retry graphs accumulate across runs by carrying the
+  generated `history/` forward through a `last-history/` directory on `gh-pages` and seeding it back
+  into `allure-results/` before the next generate. Publishing needs `permissions: contents: write`
+  because the repository default for `GITHUB_TOKEN` is read-only, and a `gh-pages` concurrency group
+  keeps two runs from pushing at once. Requires Pages enabled with `gh-pages` as the source.
 - **Docs**: `README.md`.
 
 ### Removed
@@ -45,9 +51,9 @@ Python reference project `../ai-playwright-framework`.
 
 ### Fixed
 
-- CI `npm ci` failed with `ETIMEDOUT` because `package-lock.json` was generated against Miro's
-  internal Artifactory registry, which GitHub runners cannot reach. Added `.npmrc` pinning
-  `registry.npmjs.org` so the corporate global `~/.npmrc` no longer leaks into this repo, and
+- CI `npm ci` failed with `ETIMEDOUT` because `package-lock.json` was generated against a
+  corporate internal registry, which GitHub runners cannot reach. Added `.npmrc` pinning
+  `registry.npmjs.org` so the global `~/.npmrc` no longer leaks into this repo, and
   regenerated the lockfile. All 33 `resolved` URLs now point at public npm; every `integrity` hash
   is unchanged, confirming identical tarballs.
 
